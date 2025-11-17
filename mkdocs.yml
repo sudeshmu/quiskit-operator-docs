@@ -156,6 +156,7 @@ nav:
       - index.md
       - Features: home/features.md
       - Architecture: home/architecture.md
+      - Implementation Status: home/implementation-status.md
       - Roadmap: home/roadmap.md
       - FAQ: home/faq.md
   
@@ -197,6 +198,26 @@ nav:
       - Status Conditions: reference/status.md
       - Examples: reference/examples.md
       - Tags: reference/tags.md
+  
+  - Examples:
+      - Overview: examples/README.md
+      - Circuit Examples:
+        - Bell State: examples/circuits/01_bell_state.py
+        - Quantum Teleportation: examples/circuits/02_quantum_teleportation.py
+        - Quantum Fourier Transform: examples/circuits/03_quantum_fourier_transform.py
+        - Grover's Search: examples/circuits/04_grover_search.py
+        - Shor's Algorithm: examples/circuits/05_shor_algorithm.py
+        - Quantum RNG: examples/circuits/06_quantum_random_number_generator.py
+        - VQE Circuit: examples/circuits/07_vqe_circuit.py
+        - Bernstein-Vazirani: examples/circuits/08_bernstein_vazirani.py
+        - Deutsch-Jozsa: examples/circuits/09_deutsch_jozsa.py
+        - GHZ State: examples/circuits/10_ghz_state.py
+      - YAML Examples:
+        - Local Simulator: examples/example-local-simulator.yaml
+        - QiskitJob Sample: examples/quantum_v1_qiskitjob.yaml
+        - QiskitBackend Sample: examples/quantum_v1_qiskitbackend.yaml
+        - QiskitSession Sample: examples/quantum_v1_qiskitsession.yaml
+        - QiskitBudget Sample: examples/quantum_v1_qiskitbudget.yaml
   
   - Deployment:
       - deployment/index.md
