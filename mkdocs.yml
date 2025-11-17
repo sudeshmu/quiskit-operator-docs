@@ -1,0 +1,234 @@
+site_name: Qiskit Operator Documentation
+site_description: Production-ready Kubernetes Operator for IBM Qiskit quantum computing workloads
+site_author: Quantum Operator Team
+site_url: https://quantum-operator.github.io/qiskit-operator
+
+repo_name: quantum-operator/qiskit-operator
+repo_url: https://github.com/quantum-operator/qiskit-operator
+edit_uri: edit/main/docs/
+
+copyright: Copyright &copy; 2025 Quantum Operator Team
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - navigation.footer
+    - navigation.indexes
+    - toc.follow
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.tabs.link
+    - content.code.copy
+    - content.code.annotate
+    - content.tooltips
+    - announce.dismiss
+  
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/atom
+  
+  font:
+    text: Roboto
+    code: Roboto Mono
+  
+  favicon: assets/favicon.png
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/quantum-operator/qiskit-operator
+      name: GitHub Repository
+    - icon: fontawesome/brands/docker
+      link: https://hub.docker.com/r/sudeshmu/qiskit-operator
+      name: Docker Hub
+    - icon: fontawesome/brands/slack
+      link: https://quantum-operator.slack.com
+      name: Slack Community
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/quantumoperator
+      name: Twitter
+  
+  version:
+    provider: mike
+    default: stable
+  
+  analytics:
+    provider: google
+    property: G-XXXXXXXXXX
+  
+  status:
+    new: Recently added
+    deprecated: Deprecated
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/extra.js
+
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - minify:
+      minify_html: true
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+  - awesome-pages
+  - tags:
+      tags_file: reference/tags.md
+
+markdown_extensions:
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - tables
+  
+  # Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      auto_append:
+        - includes/abbreviations.md
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+nav:
+  - Home:
+      - index.md
+      - Features: home/features.md
+      - Architecture: home/architecture.md
+      - Roadmap: home/roadmap.md
+      - FAQ: home/faq.md
+  
+  - Getting Started:
+      - getting-started/index.md
+      - Quick Start: getting-started/quick-start.md
+      - Installation: getting-started/installation.md
+      - First Quantum Job: getting-started/first-job.md
+      - Local Development: getting-started/local-development.md
+  
+  - User Guide:
+      - user-guide/index.md
+      - Quantum Jobs: user-guide/quantum-jobs.md
+      - Backends: user-guide/backends.md
+      - Sessions: user-guide/sessions.md
+      - Budget Management: user-guide/budget.md
+      - Circuit Management: user-guide/circuits.md
+      - Output Storage: user-guide/storage.md
+      - Security & RBAC: user-guide/security.md
+      - Monitoring: user-guide/monitoring.md
+  
+  - Tutorials:
+      - tutorials/index.md
+      - Bell State Circuit: tutorials/bell-state.md
+      - Grover's Algorithm: tutorials/grovers-algorithm.md
+      - VQE for Chemistry: tutorials/vqe-chemistry.md
+      - Quantum Teleportation: tutorials/quantum-teleportation.md
+      - Cost Optimization: tutorials/cost-optimization.md
+      - Multi-Backend Setup: tutorials/multi-backend.md
+      - CI/CD Integration: tutorials/cicd-integration.md
+      - Production Deployment: tutorials/production-deployment.md
+  
+  - API Reference:
+      - reference/index.md
+      - QiskitJob: reference/qiskitjob.md
+      - QiskitBackend: reference/qiskitbackend.md
+      - QiskitSession: reference/qiskitsession.md
+      - QiskitBudget: reference/qiskitbudget.md
+      - Status Conditions: reference/status.md
+      - Examples: reference/examples.md
+      - Tags: reference/tags.md
+  
+  - Deployment:
+      - deployment/index.md
+      - Docker Images: deployment/docker.md
+      - Kubernetes: deployment/kubernetes.md
+      - Helm Charts: deployment/helm.md
+      - Production Best Practices: deployment/production.md
+      - High Availability: deployment/ha.md
+      - Scaling: deployment/scaling.md
+      - Security Hardening: deployment/security.md
+  
+  - Backends:
+      - backends/index.md
+      - IBM Quantum: backends/ibm-quantum.md
+      - AWS Braket: backends/aws-braket.md
+      - Local Simulator: backends/local-simulator.md
+      - Backend Selection: backends/selection.md
+      - Cost Comparison: backends/cost-comparison.md
+  
+  - Development:
+      - development/index.md
+      - Contributing: development/contributing.md
+      - Building from Source: development/building.md
+      - Testing: development/testing.md
+      - Validation Service: development/validation-service.md
+      - Release Process: development/release.md
+      - Code of Conduct: development/code-of-conduct.md
+  
+  - Community:
+      - community/index.md
+      - Support: community/support.md
+      - Contributing: community/contributing.md
+      - Resources: community/resources.md
+      - Blog: community/blog.md
+
