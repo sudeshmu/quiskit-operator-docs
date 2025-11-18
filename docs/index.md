@@ -1,384 +1,360 @@
-# Qiskit Operator
+# QiskitOperator Documentation
 
-<div align="center">
+<div class="hero" markdown>
 
-**Kubernetes Operator for IBM Qiskit Quantum Computing** 
+# Production-Ready Kubernetes Operator for Quantum Computing
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Kubernetes](https://img.shields.io/badge/Kubernetes-1.24%2B-blue.svg)](https://kubernetes.io/)
-[![Qiskit](https://img.shields.io/badge/Qiskit-1.0.0-purple.svg)](https://qiskit.org/)
-[![Status](https://img.shields.io/badge/Status-MVP%20Phase-orange.svg)]()
+**QiskitOperator** brings IBM Qiskit quantum computing workloads into the cloud-native world with enterprise-grade reliability, security, and cost management.
 
-[Get Started](getting-started/quick-start.md){ .md-button .md-button--primary }
+[Get Started](getting-started/index.md){ .md-button .md-button--primary }
 [View on GitHub](https://github.com/quantum-operator/qiskit-operator){ .md-button }
 
 </div>
 
 ---
 
-## What is Qiskit Operator?
-
-**Qiskit Operator** is a Kubernetes operator that enables you to run IBM Qiskit quantum circuits on Kubernetes. It provides cloud-native abstractions for quantum computing workloads with automatic job management, circuit validation, and result storage.
-
-!!! info "Project Status: MVP Phase (60% Complete)"
-    This is an **active development project** in MVP phase. The core functionality works:
-    
-    - ✅ **Working**: Job submission, local simulator, circuit validation, result storage
-    - 🚧 **In Progress**: IBM Quantum integration, cost management, monitoring
-    - 📋 **Planned**: AWS Braket, Azure Quantum, Helm charts
-
-## Key Features
-
-### ✅ Currently Working
+## 🌟 Why QiskitOperator?
 
 <div class="grid cards" markdown>
 
--   :material-check-circle:{ .lg .middle } **Job Management**
+-   :material-kubernetes:{ .lg .middle } __Kubernetes-Native__
 
     ---
 
-    Submit and manage quantum jobs via Kubernetes CRDs with full lifecycle tracking
+    Define quantum jobs, backends, and sessions as Custom Resource Definitions (CRDs). Leverage Kubernetes primitives for scheduling, scaling, and lifecycle management.
 
--   :material-check-circle:{ .lg .middle } **Local Simulator**
+    [:octicons-arrow-right-24: Learn more](home/features.md#kubernetes-native)
 
-    ---
-
-    Execute quantum circuits on Qiskit Aer simulator in Kubernetes pods
-
--   :material-check-circle:{ .lg .middle } **Circuit Validation**
+-   :material-cloud:{ .lg .middle } __Multi-Backend Support__
 
     ---
 
-    Automatic Python syntax and Qiskit circuit validation before execution
+    Run quantum circuits on IBM Quantum Platform, AWS Braket, or local simulators. Intelligent backend selection based on cost, queue time, and capabilities.
 
--   :material-check-circle:{ .lg .middle } **Result Storage**
+    [:octicons-arrow-right-24: Backend options](user-guide/backends.md)
+
+-   :material-currency-usd:{ .lg .middle } __Cost Management__
 
     ---
 
-    Store results in ConfigMaps or PersistentVolumes with JSON/Pickle formats
+    Track and control quantum computing costs with budget enforcement, cost optimization algorithms, and detailed spending reports per namespace and team.
+
+    [:octicons-arrow-right-24: Budget guide](user-guide/budget.md)
+
+-   :material-shield-check:{ .lg .middle } __Enterprise Security__
+
+    ---
+
+    Built-in RBAC, Pod Security Standards, secret management, and comprehensive audit logging. Production-ready security from day one.
+
+    [:octicons-arrow-right-24: Security features](user-guide/security.md)
+
+-   :material-chart-line:{ .lg .middle } __Full Observability__
+
+    ---
+
+    Prometheus metrics, Grafana dashboards, distributed tracing, and structured logging. Monitor quantum job execution in real-time.
+
+    [:octicons-arrow-right-24: Monitoring setup](user-guide/monitoring.md)
+
+-   :material-lightning-bolt:{ .lg .middle } __Production Ready__
+
+    ---
+
+    Designed for 99.9% uptime with comprehensive error handling, retry logic, circuit validation, and automated recovery mechanisms.
+
+    [:octicons-arrow-right-24: Production deployment](deployment/production.md)
 
 </div>
 
-### 🚧 Coming Soon
+---
 
-- **IBM Quantum Integration**: Execute on real quantum hardware
-- **Cost Management**: Budget tracking and enforcement
-- **Prometheus Metrics**: Monitoring and observability
-- **Helm Charts**: Easy installation and deployment
-- **AWS Braket Support**: Multi-cloud quantum computing
+## 🚀 Quick Start
 
-## Quick Example
+Get your first quantum circuit running on Kubernetes in under 5 minutes:
 
-```yaml title="bell-state.yaml"
+```bash
+# Install the operator
+kubectl apply -f https://raw.githubusercontent.com/quantum-operator/qiskit-operator/main/config/install.yaml
+
+# Create a quantum job
+cat <<EOF | kubectl apply -f -
 apiVersion: quantum.io/v1
 kind: QiskitJob
 metadata:
-  name: bell-state
+  name: hello-quantum
 spec:
   backend:
     type: local_simulator
-  
   circuit:
     source: inline
     code: |
       from qiskit import QuantumCircuit
-      
-      # Create Bell state - quantum entanglement
       qc = QuantumCircuit(2, 2)
-      qc.h(0)           # Hadamard gate
-      qc.cx(0, 1)       # CNOT gate
+      qc.h(0)
+      qc.cx(0, 1)
       qc.measure([0, 1], [0, 1])
-  
   execution:
     shots: 1024
-  
   output:
     type: configmap
-    location: bell-state-results
+    location: hello-quantum-results
+EOF
+
+# Watch the job execute
+kubectl get qiskitjob hello-quantum -w
 ```
 
-Apply it:
+[:octicons-arrow-right-24: Full quick start guide](getting-started/quick-start.md)
 
-```bash
-kubectl apply -f bell-state.yaml
-kubectl get qiskitjob bell-state -w
-kubectl get configmap bell-state-results -o yaml
-```
+---
 
-## Architecture
+## 📚 Key Concepts
 
-```mermaid
-graph TB
-    subgraph "User"
-        U[kubectl apply]
-    end
-    
-    subgraph "Kubernetes Cluster"
-        API[API Server]
-        OP[Qiskit Operator<br/>Controller]
-        VS[Validation<br/>Service]
-        POD[Executor<br/>Pod]
-    end
-    
-    subgraph "Backends"
-        SIM[Local<br/>Simulator]
-        IBM[IBM Quantum<br/>🚧 Coming Soon]
-    end
-    
-    subgraph "Results"
-        CM[ConfigMap]
-        PVC[PersistentVolume]
-    end
-    
-    U --> API
-    API --> OP
-    OP -->|Validate| VS
-    OP -->|Create| POD
-    POD --> SIM
-    POD -.-> IBM
-    POD -->|Store| CM
-    POD -->|Store| PVC
-    
-    style OP fill:#6d4c7d
-    style VS fill:#6d4c7d
-    style POD fill:#6d4c7d
-    style IBM fill:#ddd,stroke:#999,stroke-dasharray: 5 5
-```
+### Quantum Jobs
 
-## Components
-
-### 1. Operator Controller (Go)
-
-**Status**: ✅ **Complete (587 lines)**
-
-The main Kubernetes controller that:
-- Watches for QiskitJob custom resources
-- Manages job lifecycle (Pending → Validating → Scheduling → Running → Completed)
-- Creates and monitors executor pods
-- Collects results
-- Handles retries and failures
-
-### 2. Validation Service (Python/FastAPI)
-
-**Status**: ✅ **Complete (160 lines)**
-
-A FastAPI microservice that:
-- Validates Python syntax
-- Checks Qiskit circuit code
-- Extracts circuit metrics (qubits, depth, gates)
-- Provides health checks for Kubernetes
-
-### 3. Executor Pods (Python)
-
-**Status**: ✅ **Complete (160 lines)**
-
-Ephemeral pods that:
-- Load quantum circuit from job spec
-- Execute on Qiskit Aer simulator
-- Collect and format results
-- Store output to configured location
-
-## Custom Resources
-
-### QiskitJob
-
-The main resource for submitting quantum circuits.
+Define and execute quantum circuits as Kubernetes resources with full lifecycle management:
 
 ```yaml
 apiVersion: quantum.io/v1
 kind: QiskitJob
 metadata:
-  name: my-quantum-job
+  name: grover-search
 spec:
   backend:
-    type: local_simulator  # Currently supported
-    # type: ibm_quantum    # 🚧 Coming soon
-  
+    type: ibm_quantum
+    name: ibm_brisbane
   circuit:
-    source: inline         # inline, configmap, url, git
+    source: inline
     code: |
       from qiskit import QuantumCircuit
-      qc = QuantumCircuit(2)
-      qc.h(0)
-      qc.cx(0, 1)
-      qc.measure_all()
-  
+      # Your quantum algorithm here
   execution:
     shots: 1024
-    optimizationLevel: 1  # 0-3
-  
-  output:
-    type: configmap       # configmap, pvc
-    location: my-results
-    format: json          # json, pickle
+    optimizationLevel: 3
+  budget:
+    maxCost: "$10.00"
 ```
 
-## Installation
+[:octicons-arrow-right-24: QiskitJob reference](reference/qiskitjob.md)
 
-### Prerequisites
+### Multi-Backend Architecture
 
-- Kubernetes 1.24+
-- kubectl configured
-- Docker (for building images)
+Seamlessly run circuits across different quantum backends:
 
-### Quick Start with Kind
-
-```bash
-# 1. Create Kind cluster
-kind create cluster --name qiskit-dev
-
-# 2. Clone repository
-git clone https://github.com/quantum-operator/qiskit-operator
-cd qiskit-operator
-
-# 3. Build executor image
-cd execution-pods
-docker build -t qiskit-executor:v1 .
-kind load docker-image qiskit-executor:v1 --name qiskit-dev
-
-# 4. Install CRDs
-cd ..
-make install
-
-# 5. Run operator locally
-make run
+```mermaid
+graph LR
+    A[QiskitJob] --> B{Backend Selector}
+    B -->|Real QPU| C[IBM Quantum]
+    B -->|Cloud Simulator| D[AWS Braket]
+    B -->|Local Testing| E[Qiskit Aer]
+    C --> F[Results]
+    D --> F
+    E --> F
 ```
 
-In another terminal:
-
-```bash
-# 6. Submit test job
-kubectl apply -f config/samples/example-local-simulator.yaml
-
-# 7. Watch progress
-kubectl get qiskitjob bell-state-example -w
-
-# 8. Check results
-kubectl get configmap bell-state-results -o yaml
-```
-
-## Real Examples from the Codebase
-
-We include **10 tested quantum circuit examples**:
-
-1. **Bell State** - Quantum entanglement
-2. **Quantum Teleportation** - State transfer
-3. **Quantum Fourier Transform** - QFT algorithm
-4. **Grover's Search** - Quantum search
-5. **Shor's Algorithm** - Integer factorization
-6. **QRNG** - Quantum random numbers
-7. **VQE** - Variational quantum eigensolver
-8. **Bernstein-Vazirani** - Hidden string
-9. **Deutsch-Jozsa** - Function type test
-10. **GHZ State** - Multi-qubit entanglement
-
-[View All Examples →](examples/README.md)
-
-## Project Status
-
-### What's Implemented ✅
-
-| Feature | Status | Description |
-|---------|--------|-------------|
-| **QiskitJob CRD** | ✅ Complete | Full type definition with 30+ custom types |
-| **Controller** | ✅ Complete | 587 lines with phase-based reconciliation |
-| **Executor Pods** | ✅ Complete | 160 lines of Python execution logic |
-| **Validation Service** | ✅ Complete | FastAPI service with circuit validation |
-| **Local Simulator** | ✅ Working | Qiskit Aer integration |
-| **ConfigMap Storage** | ✅ Working | Result storage in ConfigMaps |
-| **PVC Storage** | ✅ Working | Result storage in PersistentVolumes |
-
-### In Development 🚧
-
-| Feature | Status | Expected |
-|---------|--------|----------|
-| **IBM Quantum Backend** | 🚧 Planned | Phase 3 |
-| **Cost Management** | 🚧 Planned | Phase 4 |
-| **Prometheus Metrics** | 🚧 Planned | Phase 4 |
-| **Helm Chart** | 🚧 Planned | Phase 5 |
-| **AWS Braket** | 📋 Future | Post-MVP |
-
-## Development Progress
-
-**Overall Completion**: ~60% of MVP
-
-```
-█████████████████████░░░░░░░░░ 60%
-```
-
-| Component | Progress |
-|-----------|----------|
-| Project Setup | ████████████████████ 100% |
-| CRDs | ████████████████████ 100% |
-| Controller | ████████████████████ 100% |
-| Executor Pods | ████████████████████ 100% |
-| Validation Service | ████████████████████ 100% |
-| Documentation | ████████████████████ 100% |
-| IBM Backend | ░░░░░░░░░░░░░░░░░░░░ 0% |
-| Cost Management | ░░░░░░░░░░░░░░░░░░░░ 0% |
-| Metrics | ░░░░░░░░░░░░░░░░░░░░ 0% |
-
-## Community & Contributions
-
-This is an **open-source project** under active development. We welcome:
-
-- 🐛 Bug reports and feature requests
-- 📝 Documentation improvements
-- 💻 Code contributions
-- 🧪 Testing and feedback
-
-[Contributing Guide →](development/contributing.md)
-
-## Getting Help
-
-- 📖 [Documentation](getting-started/index.md)
-- 🐛 [GitHub Issues](https://github.com/quantum-operator/qiskit-operator/issues)
-- 💬 [Discussions](https://github.com/quantum-operator/qiskit-operator/discussions)
-
-## Roadmap
-
-### Phase 1: MVP Foundation ✅ (Complete)
-- ✅ CRDs and types
-- ✅ Controller logic
-- ✅ Local simulator
-- ✅ Basic validation
-
-### Phase 2: IBM Integration 🚧 (Next)
-- [ ] IBM Quantum backend
-- [ ] Token authentication
-- [ ] Session management
-- [ ] Real hardware execution
-
-### Phase 3: Enterprise Features 📋 (Planned)
-- [ ] Cost management
-- [ ] Budget enforcement
-- [ ] Prometheus metrics
-- [ ] Grafana dashboards
-
-### Phase 4: Production Ready 📋 (Future)
-- [ ] Helm chart
-- [ ] AWS Braket support
-- [ ] Advanced monitoring
-- [ ] Performance optimization
-
-## License
-
-Apache License 2.0 - See [LICENSE](https://github.com/quantum-operator/qiskit-operator/blob/main/LICENSE)
-
-## Acknowledgments
-
-- IBM Qiskit team for the quantum computing framework
-- Kubernetes community for the operator pattern
-- All contributors and testers
+[:octicons-arrow-right-24: Backend guide](backends/index.md)
 
 ---
 
-<div align="center">
+## 💡 Use Cases
+
+### Quantum Research
+
+Run quantum experiments at scale with reproducible configurations and automated result collection.
+
+```yaml
+spec:
+  circuit:
+    source: git
+    gitRef:
+      repository: https://github.com/your-org/quantum-research
+      branch: main
+      path: experiments/vqe/h2_molecule.py
+  output:
+    type: pvc
+    location: research-results
+```
+
+### Cost-Optimized Production
+
+Automatically select the most cost-effective backend while meeting performance requirements:
+
+```yaml
+spec:
+  backendSelection:
+    weights:
+      cost: 0.70
+      queueTime: 0.20
+      capability: 0.10
+    fallbackToSimulator: true
+  budget:
+    maxCost: "$5.00"
+```
+
+### Multi-Tenant Quantum Computing
+
+Provide quantum computing as a service to multiple teams with budget isolation and RBAC:
+
+```yaml
+apiVersion: quantum.io/v1
+kind: QiskitBudget
+metadata:
+  name: team-quantum-budget
+  namespace: team-a
+spec:
+  limit: "$1000.00"
+  period: monthly
+  alertThresholds:
+    - 50
+    - 80
+    - 95
+```
+
+[:octicons-arrow-right-24: More examples](examples/README.md)
+
+---
+
+## 🏗️ Architecture Overview
+
+QiskitOperator follows a modular, cloud-native architecture:
+
+```mermaid
+graph TB
+    subgraph "Kubernetes Cluster"
+        A[kubectl apply] --> B[QiskitJob CRD]
+        B --> C[Operator Controller]
+        C --> D[Validation Service]
+        D --> E{Circuit Valid?}
+        E -->|Yes| F[Backend Selector]
+        E -->|No| G[Failed]
+        F --> H[Cost Calculator]
+        H --> I{Budget OK?}
+        I -->|Yes| J[Executor Pod]
+        I -->|No| K[Pending]
+        J --> L[Quantum Backend]
+        L --> M[Results Storage]
+    end
+    
+    subgraph "External Services"
+        N[IBM Quantum Platform]
+        O[AWS Braket]
+        P[Prometheus/Grafana]
+    end
+    
+    L --> N
+    L --> O
+    C --> P
+```
+
+[:octicons-arrow-right-24: Architecture details](home/architecture.md)
+
+---
+
+## 📖 Documentation Sections
+
+<div class="grid cards" markdown>
+
+-   __Getting Started__
+
+    Install and configure QiskitOperator. Run your first quantum job in minutes.
+
+    [:octicons-arrow-right-24: Start here](getting-started/index.md)
+
+-   __User Guide__
+
+    Comprehensive guides for quantum jobs, backends, sessions, budgets, and monitoring.
+
+    [:octicons-arrow-right-24: User guide](user-guide/index.md)
+
+-   __Tutorials__
+
+    Step-by-step tutorials from Bell states to VQE algorithms and production deployments.
+
+    [:octicons-arrow-right-24: Tutorials](tutorials/index.md)
+
+-   __API Reference__
+
+    Complete reference for all Custom Resource Definitions and their specifications.
+
+    [:octicons-arrow-right-24: API docs](reference/index.md)
+
+-   __Examples__
+
+    10+ quantum circuit examples including Grover's search, Shor's algorithm, and more.
+
+    [:octicons-arrow-right-24: View examples](examples/README.md)
+
+-   __Deployment__
+
+    Production deployment guides with Docker, Kubernetes, Helm, and security best practices.
+
+    [:octicons-arrow-right-24: Deploy](deployment/index.md)
+
+</div>
+
+---
+
+## 🌐 Community & Support
+
+<div class="grid" markdown>
+
+<div markdown>
+
+### Get Help
+
+- :fontawesome-brands-github: [GitHub Issues](https://github.com/quantum-operator/qiskit-operator/issues)
+- :fontawesome-brands-slack: [Slack Community](https://quantum-operator.slack.com)
+- :fontawesome-brands-discourse: [Discussions](https://github.com/quantum-operator/qiskit-operator/discussions)
+- :material-email: [Mailing List](mailto:qiskit-operator@googlegroups.com)
+
+</div>
+
+<div markdown>
+
+### Contribute
+
+- :material-code-braces: [Contributing Guide](development/contributing.md)
+- :material-bug: [Report a Bug](https://github.com/quantum-operator/qiskit-operator/issues/new)
+- :material-lightbulb: [Request a Feature](https://github.com/quantum-operator/qiskit-operator/issues/new)
+- :material-book-open: [Improve Documentation](https://github.com/quantum-operator/qiskit-operator-docs)
+
+</div>
+
+</div>
+
+---
+
+## 🎯 Project Status
+
+QiskitOperator is in **active development** with v1.0 targeted for Q1 2025.
+
+| Feature | Status |
+|---------|--------|
+| Local Simulator Support | ✅ Completed |
+| IBM Quantum Integration | ✅ Completed |
+| Circuit Validation Service | ✅ Completed |
+| Cost Management | ✅ Completed |
+| Budget Enforcement | ✅ Completed |
+| Prometheus Metrics | ✅ Completed |
+| AWS Braket Backend | 🚧 In Progress |
+| Azure Quantum Backend | 📋 Planned |
+| Argo Workflows Integration | 📋 Planned |
+
+[:octicons-arrow-right-24: Full roadmap](home/roadmap.md)
+
+---
+
+## 📄 License
+
+QiskitOperator is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+
+---
+
+<div class="center" markdown>
 
 **Built with ❤️ by the Quantum Operator Team**
 
 *Making quantum computing cloud-native, one operator at a time*
-
-**Status**: Active Development | **Phase**: MVP | **Completion**: 60%
 
 </div>

@@ -1,224 +1,231 @@
 # Quick Start Guide
 
-Get up and running with Qiskit Operator in under 5 minutes!
+Get your first quantum circuit running on Kubernetes in under 10 minutes!
 
 ## Prerequisites
 
 Before you begin, ensure you have:
 
-- [x] Kubernetes cluster (1.24+) - [Kind](https://kind.sigs.k8s.io/), [Minikube](https://minikube.sigs.k8s.io/), or cloud cluster
-- [x] [kubectl](https://kubernetes.io/docs/tasks/tools/) configured
-- [x] [Helm 3](https://helm.sh/docs/intro/install/) installed (optional, but recommended)
+- ✅ Kubernetes cluster (v1.24+)
+  - Kind, Minikube, or cloud cluster (EKS, GKE, AKS)
+- ✅ `kubectl` installed and configured
+- ✅ Docker or Podman installed
+- ✅ (Optional) IBM Quantum account for real quantum hardware
 
-## Installation
+## Step 1: Install QiskitOperator
 
-=== "Helm (Recommended)"
+### Option A: Using kubectl (Recommended)
 
-    ```bash
-    # Add the Qiskit Operator Helm repository
-    helm repo add qiskit-operator https://quantum-operator.github.io/qiskit-operator
-    helm repo update
+```bash
+# Install CRDs and operator
+kubectl apply -f https://raw.githubusercontent.com/quantum-operator/qiskit-operator/main/config/install.yaml
 
-    # Install the operator
-    helm install qiskit-operator qiskit-operator/qiskit-operator \
-      --namespace qiskit-operator-system \
-      --create-namespace
+# Verify installation
+kubectl get pods -n qiskit-operator-system
+```
 
-    # Verify installation
-    kubectl get pods -n qiskit-operator-system
-    ```
+Expected output:
+```
+NAME                                        READY   STATUS    RESTARTS   AGE
+qiskit-operator-controller-xxxxx            1/1     Running   0          30s
+validation-service-xxxxx                    1/1     Running   0          30s
+```
 
-=== "kubectl"
+### Option B: Using Helm
 
-    ```bash
-    # Install CRDs
-    kubectl apply -f https://raw.githubusercontent.com/quantum-operator/qiskit-operator/main/config/crd/bases/
+```bash
+# Add Helm repository
+helm repo add qiskit-operator https://quantum-operator.github.io/qiskit-operator
+helm repo update
 
-    # Install the operator
-    kubectl apply -f https://raw.githubusercontent.com/quantum-operator/qiskit-operator/main/config/manager/manager.yaml
+# Install
+helm install qiskit-operator qiskit-operator/qiskit-operator \
+  --namespace qiskit-operator-system \
+  --create-namespace
 
-    # Verify installation
-    kubectl get pods -n qiskit-operator-system
-    ```
+# Verify
+helm status qiskit-operator -n qiskit-operator-system
+```
 
-=== "Local Development (Kind)"
+### Option C: For Local Development (Kind)
 
-    ```bash
-    # Create Kind cluster
-    kind create cluster --name qiskit-dev
+Perfect for testing and development:
 
-    # Clone repository
-    git clone https://github.com/quantum-operator/qiskit-operator
-    cd qiskit-operator
+```bash
+# Create Kind cluster
+kind create cluster --name qiskit-dev
 
-    # Install CRDs
-    make install
+# Build and load executor image
+cd qiskit-operator/execution-pods
+docker build -t qiskit-executor:v1 .
+kind load docker-image qiskit-executor:v1 --name qiskit-dev
 
-    # Run operator locally
-    make run
-    ```
+# Install CRDs
+cd ..
+make install
 
-## Your First Quantum Job
+# Run operator locally (keep this terminal open)
+make run
+```
 
-### Step 1: Create a Simple Bell State Circuit
+## Step 2: Verify Installation
 
-Create a file named `bell-state.yaml`:
+Check that CRDs are installed:
 
-```yaml title="bell-state.yaml"
+```bash
+kubectl get crds | grep quantum.io
+```
+
+Expected output:
+```
+qiskitbackends.quantum.io
+qiskitbudgets.quantum.io
+qiskitjobs.quantum.io
+qiskitsessions.quantum.io
+```
+
+## Step 3: Run Your First Quantum Circuit
+
+Create a file named `hello-quantum.yaml`:
+
+```yaml
 apiVersion: quantum.io/v1
 kind: QiskitJob
 metadata:
-  name: my-first-quantum-job
+  name: hello-quantum
   namespace: default
 spec:
+  # Use local simulator (no quantum hardware needed)
   backend:
     type: local_simulator
   
+  # Define a simple Bell state circuit
   circuit:
     source: inline
     code: |
       from qiskit import QuantumCircuit
       
-      # Create a Bell state - the simplest entangled state
+      # Create a Bell state (entangled qubits)
       qc = QuantumCircuit(2, 2)
-      qc.h(0)           # Apply Hadamard gate to qubit 0
-      qc.cx(0, 1)       # Apply CNOT gate
+      qc.h(0)        # Hadamard gate on qubit 0
+      qc.cx(0, 1)    # CNOT gate
       qc.measure([0, 1], [0, 1])  # Measure both qubits
   
+  # Execution parameters
   execution:
-    shots: 1024
-    optimizationLevel: 1
+    shots: 1024              # Run circuit 1024 times
+    optimizationLevel: 1     # Optimize circuit
   
+  # Store results in a ConfigMap
   output:
     type: configmap
-    location: my-first-results
+    location: hello-quantum-results
+    format: json
 ```
 
-### Step 2: Submit the Job
+Apply the job:
 
 ```bash
-# Apply the job
-kubectl apply -f bell-state.yaml
-
-# Watch the job progress
-kubectl get qiskitjob my-first-quantum-job -w
+kubectl apply -f hello-quantum.yaml
 ```
 
-You should see output like:
+## Step 4: Monitor Execution
 
-```
-NAME                    PHASE        BACKEND           COST     AGE
-my-first-quantum-job   Pending      local_simulator   $0.00    1s
-my-first-quantum-job   Validating   local_simulator   $0.00    2s
-my-first-quantum-job   Scheduling   local_simulator   $0.00    3s
-my-first-quantum-job   Running      local_simulator   $0.00    5s
-my-first-quantum-job   Completed    local_simulator   $0.00    25s
-```
-
-### Step 3: View the Results
+Watch the job progress:
 
 ```bash
-# Get the results
-kubectl get configmap my-first-results -o yaml
+kubectl get qiskitjob hello-quantum -w
+```
+
+You'll see the job transition through phases:
+
+```
+NAME             PHASE        BACKEND           COST     AGE
+hello-quantum    Pending      local_simulator   $0.00    1s
+hello-quantum    Validating   local_simulator   $0.00    2s
+hello-quantum    Scheduling   local_simulator   $0.00    3s
+hello-quantum    Running      local_simulator   $0.00    5s
+hello-quantum    Completed    local_simulator   $0.00    28s
+```
+
+Press `Ctrl+C` when phase is `Completed`.
+
+## Step 5: View Results
+
+Get the results from the ConfigMap:
+
+```bash
+kubectl get configmap hello-quantum-results -o yaml
+```
+
+Or extract just the results:
+
+```bash
+kubectl get configmap hello-quantum-results -o jsonpath='{.data.results}' | jq
 ```
 
 Expected output:
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: my-first-results
-data:
-  counts: |
-    {
-      "00": 512,
-      "11": 512
-    }
-  metadata: |
-    {
-      "shots": 1024,
-      "backend": "local_simulator",
-      "execution_time": 0.234,
-      "qubits": 2,
-      "depth": 3
-    }
+```json
+{
+  "counts": {
+    "00": 512,
+    "11": 512
+  },
+  "metadata": {
+    "shots": 1024,
+    "qubits": 2,
+    "depth": 3,
+    "gates": 4,
+    "execution_time": 1.23
+  },
+  "backend": "local_simulator",
+  "success": true
+}
 ```
 
-!!! success "Congratulations! 🎉"
-    You just ran your first quantum circuit on Kubernetes! The Bell state creates quantum entanglement, where measuring one qubit instantly determines the state of the other.
+🎉 **Congratulations!** You've just created quantum entanglement on Kubernetes!
 
-## Understanding the Results
+The 50/50 split between `00` and `11` confirms you created a Bell state - the qubits are perfectly entangled.
 
-The Bell state circuit produces a **maximally entangled state**:
+## Step 6: View Execution Logs
 
-| Result | Count | Percentage | Meaning |
-|--------|-------|------------|---------|
-| `00` | ~512 | ~50% | Both qubits measured as 0 |
-| `11` | ~512 | ~50% | Both qubits measured as 1 |
+Check detailed execution logs:
 
-Notice we never get `01` or `10` - this is quantum entanglement in action!
+```bash
+# Find the pod
+kubectl get pods -l job-name=hello-quantum
 
-## Job Lifecycle
+# View logs
+kubectl logs qiskit-job-hello-quantum
+```
 
-```mermaid
-stateDiagram-v2
-    [*] --> Pending: Job Created
-    Pending --> Validating: CRD Validated
-    Validating --> Scheduling: Circuit Valid
-    Scheduling --> Running: Pod Created
-    Running --> Completed: Execution Success
-    Running --> Failed: Execution Error
-    Validating --> Failed: Validation Error
-    Completed --> [*]
-    Failed --> [*]
+Sample output:
+
+```
+[INFO] 2025-11-18 10:30:45 - Starting quantum circuit execution
+[INFO] 2025-11-18 10:30:45 - Validating circuit...
+[INFO] 2025-11-18 10:30:46 - Circuit validation: PASSED
+[INFO] 2025-11-18 10:30:46 - Circuit metrics:
+[INFO] 2025-11-18 10:30:46 -   Qubits: 2
+[INFO] 2025-11-18 10:30:46 -   Depth: 3
+[INFO] 2025-11-18 10:30:46 -   Gates: 4
+[INFO] 2025-11-18 10:30:46 - Backend: local_simulator
+[INFO] 2025-11-18 10:30:46 - Executing circuit with 1024 shots...
+[INFO] 2025-11-18 10:30:47 - Execution completed in 1.23s
+[INFO] 2025-11-18 10:30:47 - Results: {'00': 512, '11': 512}
+[INFO] 2025-11-18 10:30:47 - Storing results in ConfigMap: hello-quantum-results
+[INFO] 2025-11-18 10:30:47 - Job completed successfully
 ```
 
 ## What's Next?
 
-Now that you've run your first quantum job, explore more:
+### Try More Examples
 
-<div class="grid cards" markdown>
+#### Grover's Search Algorithm
 
--   :material-school:{ .lg .middle } **Learn More**
-
-    ---
-
-    Explore quantum algorithms and concepts
-
-    [:octicons-arrow-right-24: Tutorials](../tutorials/index.md)
-
--   :material-code-braces:{ .lg .middle } **More Examples**
-
-    ---
-
-    Try Grover's search, VQE, and more
-
-    [:octicons-arrow-right-24: Examples](../reference/examples.md)
-
--   :material-server:{ .lg .middle } **Production Setup**
-
-    ---
-
-    Deploy to production with best practices
-
-    [:octicons-arrow-right-24: Deployment Guide](../deployment/production.md)
-
--   :material-cloud:{ .lg .middle } **Real Quantum Hardware**
-
-    ---
-
-    Connect to IBM Quantum Platform
-
-    [:octicons-arrow-right-24: IBM Quantum Setup](../backends/ibm-quantum.md)
-
-</div>
-
-## Common Next Steps
-
-### 1. Try More Complex Circuits
-
-```yaml
+```bash
+kubectl apply -f - <<EOF
 apiVersion: quantum.io/v1
 kind: QiskitJob
 metadata:
@@ -230,108 +237,349 @@ spec:
     source: inline
     code: |
       from qiskit import QuantumCircuit
+      import math
       
-      # Grover's algorithm - quantum search
-      qc = QuantumCircuit(3)
-      qc.h([0, 1, 2])       # Superposition
-      # Oracle for |111⟩
-      qc.ccx(0, 1, 2)
+      qc = QuantumCircuit(3, 3)
       qc.h([0, 1, 2])
-      qc.x([0, 1, 2])
-      qc.h(2)
-      qc.ccx(0, 1, 2)
-      qc.h(2)
-      qc.x([0, 1, 2])
-      qc.h([0, 1, 2])
-      qc.measure_all()
+      
+      # Grover iteration
+      optimal_iterations = int(math.pi/4 * math.sqrt(8))
+      for _ in range(optimal_iterations):
+          # Oracle for |101⟩
+          qc.x(1)
+          qc.h(2)
+          qc.ccx(0, 1, 2)
+          qc.h(2)
+          qc.x(1)
+          qc.barrier()
+          
+          # Diffusion
+          qc.h([0, 1, 2])
+          qc.x([0, 1, 2])
+          qc.h(2)
+          qc.ccx(0, 1, 2)
+          qc.h(2)
+          qc.x([0, 1, 2])
+          qc.h([0, 1, 2])
+          qc.barrier()
+      
+      qc.measure([0, 1, 2], [0, 1, 2])
   execution:
-    shots: 8192
+    shots: 2048
+  output:
+    type: configmap
+    location: grover-results
+EOF
 ```
 
-### 2. Set Up IBM Quantum Access
+#### Quantum Random Number Generator
 
 ```bash
-# Create secret with your IBM Quantum API key
-kubectl create secret generic ibm-quantum-credentials \
-  --from-literal=api-key=YOUR_API_KEY
+kubectl apply -f - <<EOF
+apiVersion: quantum.io/v1
+kind: QiskitJob
+metadata:
+  name: qrng
+spec:
+  backend:
+    type: local_simulator
+  circuit:
+    source: inline
+    code: |
+      from qiskit import QuantumCircuit
+      
+      # 8-qubit quantum RNG
+      qc = QuantumCircuit(8, 8)
+      qc.h(range(8))
+      qc.measure(range(8), range(8))
+  execution:
+    shots: 100
+  output:
+    type: configmap
+    location: qrng-results
+EOF
 ```
 
-Then modify your job to use IBM Quantum:
+### Use Real Quantum Hardware
 
-```yaml hl_lines="6-7"
+#### 1. Get IBM Quantum API Key
+
+Visit [IBM Quantum](https://quantum.ibm.com/) and create an account to get your API key.
+
+#### 2. Create Kubernetes Secret
+
+```bash
+kubectl create secret generic ibm-quantum-credentials \
+  --from-literal=api-key=YOUR_IBM_QUANTUM_API_KEY
+```
+
+#### 3. Submit Job to Real Quantum Computer
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: quantum.io/v1
+kind: QiskitJob
+metadata:
+  name: real-quantum-hardware
+spec:
+  backend:
+    type: ibm_quantum
+    name: ibm_brisbane  # 127-qubit quantum processor
+  
+  circuit:
+    source: inline
+    code: |
+      from qiskit import QuantumCircuit
+      
+      qc = QuantumCircuit(2, 2)
+      qc.h(0)
+      qc.cx(0, 1)
+      qc.measure([0, 1], [0, 1])
+  
+  execution:
+    shots: 1024
+    optimizationLevel: 3  # Maximum optimization for real hardware
+  
+  credentials:
+    secretRef:
+      name: ibm-quantum-credentials
+  
+  budget:
+    maxCost: "$2.00"  # Set a budget limit
+  
+  output:
+    type: configmap
+    location: real-quantum-results
+EOF
+```
+
+**Note:** Real quantum hardware may take longer due to queue times and will have noise affecting results.
+
+### Explore All Features
+
+Create a comprehensive production job:
+
+```yaml
+apiVersion: quantum.io/v1
+kind: QiskitJob
+metadata:
+  name: production-job
+  labels:
+    team: quantum-research
+    environment: production
 spec:
   backend:
     type: ibm_quantum
     name: ibm_brisbane
+  
+  circuit:
+    source: git
+    gitRef:
+      repository: https://github.com/your-org/quantum-algorithms
+      branch: main
+      path: production/algorithm.py
+  
+  execution:
+    shots: 8192
+    optimizationLevel: 3
+    priority: high
+  
+  session:
+    name: vqe-session
+    maxTime: 3600
+    mode: dedicated
+  
+  budget:
+    maxCost: "$50.00"
+    costCenter: "research-dept"
+  
+  backendSelection:
+    weights:
+      cost: 0.40
+      queueTime: 0.30
+      capability: 0.20
+      availability: 0.10
+    fallbackToSimulator: true
+  
+  output:
+    type: s3
+    location: s3://quantum-results/production/
+    format: json
+  
+  resources:
+    requests:
+      cpu: "2"
+      memory: "8Gi"
+    limits:
+      cpu: "8"
+      memory: "32Gi"
+  
   credentials:
     secretRef:
       name: ibm-quantum-credentials
+  
+  retryPolicy:
+    maxRetries: 3
 ```
 
-### 3. Add Cost Management
+## Common Commands
 
-```yaml
-apiVersion: quantum.io/v1
-kind: QiskitBudget
-metadata:
-  name: team-budget
-spec:
-  limit: "$500.00"
-  period: monthly
-  alerts:
-    - threshold: 80
-      channels: ["slack"]
-```
-
-### 4. Monitor with Prometheus
+### Manage Jobs
 
 ```bash
-# Install Prometheus monitoring
-kubectl apply -f config/prometheus/
+# List all quantum jobs
+kubectl get qiskitjobs
 
-# Access Grafana dashboard
-kubectl port-forward -n monitoring svc/grafana 3000:3000
+# Get job details
+kubectl describe qiskitjob hello-quantum
+
+# Delete a job
+kubectl delete qiskitjob hello-quantum
+
+# Delete all jobs
+kubectl delete qiskitjobs --all
+```
+
+### View Results
+
+```bash
+# List result ConfigMaps
+kubectl get configmaps -l app=qiskit-operator
+
+# View results
+kubectl get configmap hello-quantum-results -o yaml
+
+# Extract and format
+kubectl get configmap hello-quantum-results -o jsonpath='{.data.results}' | jq
+```
+
+### Debugging
+
+```bash
+# Check operator logs
+kubectl logs -n qiskit-operator-system deployment/qiskit-operator-controller
+
+# Check validation service
+kubectl logs -n qiskit-operator-system deployment/validation-service
+
+# Check executor pod
+kubectl logs qiskit-job-hello-quantum
+
+# Get job status
+kubectl get qiskitjob hello-quantum -o jsonpath='{.status.phase}'
+```
+
+## Cleanup
+
+When you're done:
+
+```bash
+# Delete the job
+kubectl delete qiskitjob hello-quantum
+
+# Delete the results
+kubectl delete configmap hello-quantum-results
+
+# Uninstall operator (optional)
+kubectl delete -f https://raw.githubusercontent.com/quantum-operator/qiskit-operator/main/config/install.yaml
+
+# Delete Kind cluster (if using Kind)
+kind delete cluster --name qiskit-dev
 ```
 
 ## Troubleshooting
 
-??? question "Job stuck in Pending"
-    
-    Check the operator logs:
-    ```bash
-    kubectl logs -n qiskit-operator-system deployment/qiskit-operator-controller -f
-    ```
+### Job Stuck in Pending
 
-??? question "Pod fails to start"
-    
-    Verify the executor image is available:
-    ```bash
-    kubectl describe pod qiskit-job-my-first-quantum-job
-    ```
+**Problem:** Job doesn't progress past Pending phase.
 
-??? question "Circuit validation fails"
-    
-    Check validation service logs:
-    ```bash
-    kubectl logs -n qiskit-operator-system deployment/qiskit-validation-service
-    ```
+**Solution:**
+```bash
+# Check if operator is running
+kubectl get pods -n qiskit-operator-system
 
-??? question "Results not appearing"
-    
-    Verify the output configuration:
-    ```bash
-    kubectl describe qiskitjob my-first-quantum-job
-    kubectl get pods -l job-name=my-first-quantum-job
-    ```
+# Check operator logs
+kubectl logs -n qiskit-operator-system deployment/qiskit-operator-controller
 
-## Need Help?
+# Ensure CRDs are installed
+kubectl get crds | grep quantum.io
+```
 
-- 📖 [Full Documentation](../user-guide/index.md)
-- 💬 [GitHub Discussions](https://github.com/quantum-operator/qiskit-operator/discussions)
-- 🐛 [Report Issues](https://github.com/quantum-operator/qiskit-operator/issues)
-- 💼 [Slack Community](https://quantum-operator.slack.com)
+### Pod ImagePullBackOff
+
+**Problem:** Executor pod can't pull the image.
+
+**Solution for Kind:**
+```bash
+# Load the image into Kind
+kind load docker-image qiskit-executor:v1 --name qiskit-dev
+```
+
+**Solution for private registries:**
+```bash
+# Create imagePullSecret
+kubectl create secret docker-registry regcred \
+  --docker-server=your-registry.com \
+  --docker-username=username \
+  --docker-password=password
+```
+
+### Circuit Validation Failed
+
+**Problem:** Job fails with validation error.
+
+**Solution:** Test your circuit locally first:
+```python
+from qiskit import QuantumCircuit
+
+# Test your circuit code
+qc = QuantumCircuit(2, 2)
+qc.h(0)
+qc.cx(0, 1)
+qc.measure([0, 1], [0, 1])
+
+print(qc)  # Should print the circuit
+```
+
+## Next Steps
+
+Now that you've successfully run your first quantum job, explore these topics:
+
+1. **[Tutorials](../tutorials/index.md)** - Step-by-step guides for various algorithms
+2. **[User Guide](../user-guide/index.md)** - Deep dive into all features
+3. **[Examples](../examples/README.md)** - 10+ quantum circuit examples
+4. **[API Reference](../reference/index.md)** - Complete CRD specifications
+5. **[Production Deployment](../deployment/production.md)** - Deploy to production
+
+## Learning Resources
+
+### Quantum Computing Basics
+
+- [Qiskit Textbook](https://qiskit.org/textbook/)
+- [IBM Quantum Learning](https://learning.quantum.ibm.com/)
+- [Qiskit YouTube Channel](https://www.youtube.com/c/qiskit)
+
+### QiskitOperator
+
+- [Complete Documentation](../index.md)
+- [GitHub Repository](https://github.com/quantum-operator/qiskit-operator)
+- [Community Slack](https://quantum-operator.slack.com)
+
+## Success!
+
+🎉 You've successfully:
+
+- ✅ Installed QiskitOperator
+- ✅ Created a Bell state (quantum entanglement)
+- ✅ Retrieved and interpreted results
+- ✅ Learned basic kubectl commands for quantum jobs
+
+Welcome to the cloud-native quantum computing revolution! 🚀
 
 ---
 
-**Next Steps**: Learn about [installation options](installation.md) or jump into [tutorials](../tutorials/index.md)!
+**Questions or issues?** 
 
+- 📖 [Full Documentation](../index.md)
+- 💬 [GitHub Discussions](https://github.com/quantum-operator/qiskit-operator/discussions)
+- 🐛 [Report an Issue](https://github.com/quantum-operator/qiskit-operator/issues)
