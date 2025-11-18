@@ -1,0 +1,157 @@
+/* Custom styles for Qiskit Operator documentation */
+
+/* Primary brand color - quantum purple */
+:root {
+  --md-primary-fg-color: #6d4c7d;
+  --md-accent-fg-color: #9b59b6;
+}
+
+/* Enhanced code blocks */
+.highlight pre {
+  border-left: 4px solid var(--md-accent-fg-color);
+}
+
+/* Custom card styling */
+.md-typeset .grid.cards > ul > li {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  transition: all 0.2s;
+}
+
+.md-typeset .grid.cards > ul > li:hover {
+  border-color: var(--md-accent-fg-color);
+  box-shadow: 0 4px 8px rgba(109, 76, 125, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  border-radius: 3px;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+.status-stable {
+  background-color: #27ae60;
+  color: white;
+}
+
+.status-beta {
+  background-color: #f39c12;
+  color: white;
+}
+
+.status-alpha {
+  background-color: #e74c3c;
+  color: white;
+}
+
+/* Enhanced admonitions */
+.md-typeset .admonition {
+  border-left: 4px solid;
+}
+
+/* Quantum-themed colors for different levels */
+.difficulty-beginner {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.difficulty-intermediate {
+  color: #f39c12;
+  font-weight: 600;
+}
+
+.difficulty-advanced {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+/* Command line styling */
+.language-bash .gp {
+  user-select: none;
+  color: var(--md-code-hl-comment-color);
+}
+
+/* Enhanced tables */
+.md-typeset table:not([class]) {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.md-typeset table:not([class]) th {
+  background-color: var(--md-primary-fg-color);
+  color: white;
+  font-weight: 600;
+}
+
+/* Mermaid diagram styling */
+.mermaid {
+  text-align: center;
+  margin: 2em 0;
+}
+
+/* Enhanced buttons */
+.md-button {
+  transition: all 0.3s;
+}
+
+.md-button:hover {
+  transform: scale(1.05);
+}
+
+/* Code block titles */
+.md-typeset .tabbed-set>input:first-child:checked~.tabbed-labels>:first-child,
+.md-typeset .tabbed-set>input:nth-child(2):checked~.tabbed-labels>:nth-child(2),
+.md-typeset .tabbed-set>input:nth-child(3):checked~.tabbed-labels>:nth-child(3) {
+  color: var(--md-accent-fg-color);
+}
+
+/* Quantum circuit visualization helper */
+.circuit-diagram {
+  background: #f8f9fa;
+  padding: 1em;
+  border-radius: 4px;
+  margin: 1em 0;
+}
+
+/* Footer customization */
+.md-footer-meta {
+  background-color: var(--md-primary-fg-color);
+}
+
+/* Responsive images */
+.md-typeset img {
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced search results */
+.md-search-result__teaser {
+  max-height: 5rem;
+}
+
+/* Cost display styling */
+.cost-display {
+  font-family: monospace;
+  color: var(--md-accent-fg-color);
+  font-weight: 600;
+}
+
+/* Performance metrics table */
+.metrics-table {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Version badge */
+.version-badge {
+  background: linear-gradient(135deg, var(--md-primary-fg-color), var(--md-accent-fg-color));
+  color: white;
+  padding: 0.3em 0.8em;
+  border-radius: 20px;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
